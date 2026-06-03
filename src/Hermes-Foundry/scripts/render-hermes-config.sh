@@ -101,6 +101,8 @@ rm -f "$out_file"
         printf '  ftb:\n'
         printf '    url: "%s"\n' "$(yaml_double_quote "$toolbox_mcp_url")"
         printf '    auth: "%s"\n' "$(yaml_double_quote "entra_id")"
+        printf '    headers:\n'
+        printf '      Foundry-Features: "%s"\n' "$(yaml_double_quote "Toolboxes=V1Preview")"
         printf '    entra:\n'
         printf '      scope: "%s"\n' "$(yaml_double_quote "https://ai.azure.com/.default")"
         printf '    timeout: 120\n'

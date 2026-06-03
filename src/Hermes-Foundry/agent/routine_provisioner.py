@@ -12,8 +12,7 @@ Instead, the agent provisions the routine itself. On the first terminal
 fires a best-effort background task that ensures a routine
 ``hermes-maint-<hash(session_id)>`` exists and matches the desired spec, calling
 back the project's routines REST API with the hosted managed identity and the
-raw session isolation headers from the active hosted-agent request or RPC
-payload.
+resolved hosted-agent session isolation headers from the active request.
 
 Design constraints:
 
@@ -50,6 +49,7 @@ _DEFAULT_CRON = "0 9 * * *"
 _DEFAULT_TIMEZONE = "UTC"
 _DEFAULT_ROUTINE_PREFIX = "hermes-maint-"
 _DEFAULT_API_VERSION = "2025-05-15-preview"
+_ROUTINE_ISOLATION_CONTEXT_VERSION = "resolved-agent-headers-v1"
 _TOKEN_SCOPE = "https://ai.azure.com/.default"
 _HTTP_TIMEOUT_S = 15.0
 _AGENT_USER_ISOLATION_HEADER = "x-agent-user-isolation-key"
@@ -148,11 +148,8 @@ def _routine_isolation_headers(
     if agent_request_headers is None:
         return {}
 
-    user_key = _header_value(agent_request_headers, _ROUTINE_USER_ISOLATION_HEADER)
-    chat_key = _header_value(agent_request_headers, _ROUTINE_CHAT_ISOLATION_HEADER)
-    if not (user_key and chat_key):
-        user_key = _header_value(agent_request_headers, _AGENT_USER_ISOLATION_HEADER)
-        chat_key = _header_value(agent_request_headers, _AGENT_CHAT_ISOLATION_HEADER)
+    user_key = _header_value(agent_request_headers, _AGENT_USER_ISOLATION_HEADER)
+    chat_key = _header_value(agent_request_headers, _AGENT_CHAT_ISOLATION_HEADER)
 
     headers: dict[str, str] = {}
     if user_key:
@@ -163,14 +160,14 @@ def _routine_isolation_headers(
 
 
 def _routine_isolation_header_source(headers: Mapping[str, str]) -> str:
-    if _header_value(headers, _ROUTINE_USER_ISOLATION_HEADER) and _header_value(
-        headers, _ROUTINE_CHAT_ISOLATION_HEADER
-    ):
-        return "x-ms"
     if _header_value(headers, _AGENT_USER_ISOLATION_HEADER) and _header_value(
         headers, _AGENT_CHAT_ISOLATION_HEADER
     ):
         return "x-agent"
+    if _header_value(headers, _ROUTINE_USER_ISOLATION_HEADER) and _header_value(
+        headers, _ROUTINE_CHAT_ISOLATION_HEADER
+    ):
+        return "x-ms-unresolved"
     return "missing"
 
 
@@ -199,7 +196,11 @@ def _desired_routine(session_id: str) -> dict[str, Any]:
             "type": "invoke_agent_invocations_api",
             "agent_name": _agent_name(),
             "session_id": session_id,
-            "input": {"kind": "hermes.maintenance", "jobs": ["all"]},
+            "input": {
+                "kind": "hermes.maintenance",
+                "jobs": ["all"],
+                "isolation_context_version": _ROUTINE_ISOLATION_CONTEXT_VERSION,
+            },
         },
     }
 
@@ -463,6 +464,14 @@ def schedule_maintenance_routine(
         return
     source = _routine_isolation_header_source(agent_request_headers or {})
     routine_isolation_headers = _routine_isolation_headers(agent_request_headers)
+    if source != "x-agent":
+        logger.warning(
+            "cannot provision maintenance routine for session %s: resolved "
+            "hosted-agent isolation headers are missing (source=%s)",
+            session_id,
+            source,
+        )
+        return
     with _state_lock:
         if session_id in _provisioned or session_id in _in_flight:
             return

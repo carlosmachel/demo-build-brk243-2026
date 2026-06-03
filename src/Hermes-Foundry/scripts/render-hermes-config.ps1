@@ -110,6 +110,8 @@ if (-not [string]::IsNullOrWhiteSpace($ToolboxMcpUrl)) {
         "  ftb:",
         (Format-YamlScalarLine "url" $ToolboxMcpUrl 4),
         (Format-YamlScalarLine "auth" "entra_id" 4),
+        "    headers:",
+        (Format-YamlScalarLine "Foundry-Features" "Toolboxes=V1Preview" 6),
         "    entra:",
         (Format-YamlScalarLine "scope" "https://ai.azure.com/.default" 6),
         "    timeout: 120",
