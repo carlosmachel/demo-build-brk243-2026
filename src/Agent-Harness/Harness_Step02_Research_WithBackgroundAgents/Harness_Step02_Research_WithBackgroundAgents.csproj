@@ -15,4 +15,10 @@
     <ProjectReference Include="..\Harness_Shared_Console_OpenAI\Harness_Shared_Console_OpenAI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update=".env">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

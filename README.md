@@ -31,6 +31,7 @@ This repository includes runnable .NET samples under `src/Agent-Harness`.
 ```powershell
 $env:AZURE_AI_PROJECT_ENDPOINT = "https://<your-project>.services.ai.azure.com/api/projects/<your-project-name>"
 $env:AZURE_AI_MODEL_DEPLOYMENT_NAME = "gpt-5.4"
+$env:AZURE_AI_API_KEY="YOUR_API_KEY"
 ```
 
 3. Build all sample projects from the repo root:
