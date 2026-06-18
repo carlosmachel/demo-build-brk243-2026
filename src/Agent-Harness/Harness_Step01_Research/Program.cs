@@ -15,9 +15,6 @@
 #pragma warning disable OPENAI001 // Suppress experimental API warnings for Responses API usage.
 #pragma warning disable MAAI001  // Suppress experimental API warnings for Agents AI experiments.
 
-using System.ClientModel.Primitives;
-using Azure.AI.Projects;
-using Azure.Identity;
 using Harness.Shared.Console;
 using Harness.Shared.Console.OpenAI;
 using Harness.Shared.Console.ToolFormatters;
@@ -68,15 +65,9 @@ var instructions =
 // FileMemoryProvider, ToolApproval, WebSearch, AgentSkillsProvider, and OpenTelemetry.
 // Only custom instructions, a WebBrowsingTool, and FileAccess opt-out are needed.
 AIAgent agent =
-    // Create an OpenAIClient that communicates with the Foundry responses service.
-    new AIProjectClient(
-        new Uri(endpoint),
-        // WARNING: DefaultAzureCredential is convenient for development but requires careful consideration in production.
-        // In production, consider using a specific credential (e.g., ManagedIdentityCredential) to avoid
-        // latency issues, unintended credential probing, and potential security risks from fallback mechanisms.
-        new DefaultAzureCredential(),
-        new AIProjectClientOptions { RetryPolicy = new ClientRetryPolicy(3) })  // Enable retries to improve resiliency.
-    .GetProjectOpenAIClient()
+    // Create an OpenAIClient that communicates with the Foundry responses service, authenticating with
+    // Microsoft Entra ID by default or with AZURE_AI_API_KEY if it's set.
+    FoundryOpenAIClientFactory.Create(endpoint)
     .GetResponsesClient()
     .AsIChatClient(deploymentName)
     .AsHarnessAgent(MaxContextWindowTokens, MaxOutputTokens, new HarnessAgentOptions

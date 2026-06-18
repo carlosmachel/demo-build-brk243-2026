@@ -17,7 +17,7 @@ https://github.com/microsoft/agent-framework/
 ## Prerequisites
 
 - .NET 10 SDK
-- Azure CLI signed in (`az login`) or another credential source supported by `DefaultAzureCredential`
+- Azure CLI signed in (`az login`) or another credential source supported by `DefaultAzureCredential` — or an `AZURE_AI_API_KEY` (see below)
 - Azure AI Foundry project endpoint and model deployment name
 
 For `Harness_Step04_CodeExecution`:
@@ -30,12 +30,15 @@ All samples in this folder use the same variables:
 
 - `AZURE_AI_PROJECT_ENDPOINT`
 - `AZURE_AI_MODEL_DEPLOYMENT_NAME` (optional, defaults to `gpt-5.4`)
+- `AZURE_AI_API_KEY` (optional) — if set, samples authenticate to the Foundry project's OpenAI-compatible endpoint with this static key instead of Microsoft Entra ID. Leave unset to keep using `DefaultAzureCredential` (`az login`, managed identity, etc.), which is recommended for anything beyond local development.
 
 PowerShell:
 
 ```powershell
 $env:AZURE_AI_PROJECT_ENDPOINT = "https://<your-project>.services.ai.azure.com/api/projects/<your-project-name>"
 $env:AZURE_AI_MODEL_DEPLOYMENT_NAME = "gpt-5.4"
+# Optional: use an API key instead of Microsoft Entra ID
+$env:AZURE_AI_API_KEY = "<your-api-key>"
 ```
 
 Bash:
@@ -43,6 +46,8 @@ Bash:
 ```bash
 export AZURE_AI_PROJECT_ENDPOINT="https://<your-project>.services.ai.azure.com/api/projects/<your-project-name>"
 export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-5.4"
+# Optional: use an API key instead of Microsoft Entra ID
+export AZURE_AI_API_KEY="<your-api-key>"
 ```
 
 ## Build All Samples

@@ -12,9 +12,6 @@
 #pragma warning disable OPENAI001 // Suppress experimental API warnings for Responses API usage.
 #pragma warning disable MAAI001  // Suppress experimental API warnings for Agents AI experiments.
 
-using System.ClientModel.Primitives;
-using Azure.AI.Projects;
-using Azure.Identity;
 using Harness.Shared.Console;
 using Harness.Shared.Console.OpenAI;
 using Microsoft.Agents.AI;
@@ -30,18 +27,15 @@ const string TracingSourceName = "Harness.SubAgents";
 // Set up OpenTelemetry tracing that writes spans to a text file.
 using var tracerProvider = HarnessTracing.CreateFileTracerProvider(TracingSourceName);
 
-// Create the AIProjectClient for communicating with the Foundry responses service.
-var projectClient = new AIProjectClient(
-    new Uri(endpoint),
-    new DefaultAzureCredential(),
-    new AIProjectClientOptions { RetryPolicy = new ClientRetryPolicy(3) });
+// Create the OpenAIClient for communicating with the Foundry responses service, authenticating with
+// Microsoft Entra ID by default or with AZURE_AI_API_KEY if it's set.
+var openAIClient = FoundryOpenAIClientFactory.Create(endpoint);
 
 // --- Background agent: Web Search Agent ---
 // This agent uses the HarnessAgent's built-in HostedWebSearchTool to search the web.
 // Features not needed by this sub-agent are disabled.
 AIAgent webSearchAgent =
-    projectClient
-    .GetProjectOpenAIClient()
+    openAIClient
     .GetResponsesClient()
     .AsIChatClient(deploymentName)
     .AsHarnessAgent(MaxContextWindowTokens, MaxOutputTokens, new HarnessAgentOptions
@@ -88,8 +82,7 @@ var parentInstructions =
 // This agent orchestrates the sub-agent to look up stock prices in parallel.
 // Most features are disabled since the parent only needs SubAgentsProvider.
 AIAgent parentAgent =
-    projectClient
-    .GetProjectOpenAIClient()
+    openAIClient
     .GetResponsesClient()
     .AsIChatClient(deploymentName)
     .AsHarnessAgent(MaxContextWindowTokens, MaxOutputTokens, new HarnessAgentOptions

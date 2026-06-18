@@ -15,9 +15,6 @@
 #pragma warning disable OPENAI001 // Suppress experimental API warnings for Responses API usage.
 #pragma warning disable MAAI001  // Suppress experimental API warnings for Agents AI experiments.
 
-using System.ClientModel.Primitives;
-using Azure.AI.Projects;
-using Azure.Identity;
 using Harness.Shared.Console;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -61,11 +58,9 @@ var instructions =
 // sample's working/ folder (copied to the output directory) so it works regardless of cwd.
 // Unused features are disabled.
 AIAgent agent =
-    new AIProjectClient(
-        new Uri(endpoint),
-        new DefaultAzureCredential(),
-        new AIProjectClientOptions { RetryPolicy = new ClientRetryPolicy(3) })
-    .GetProjectOpenAIClient()
+    // Create an OpenAIClient that communicates with the Foundry responses service, authenticating with
+    // Microsoft Entra ID by default or with AZURE_AI_API_KEY if it's set.
+    FoundryOpenAIClientFactory.Create(endpoint)
     .GetResponsesClient()
     .AsIChatClient(deploymentName)
     .AsHarnessAgent(MaxContextWindowTokens, MaxOutputTokens, new HarnessAgentOptions
