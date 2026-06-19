@@ -23,7 +23,7 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using SampleApp;
 
-DotEnv.Load();
+DotEnv.Load(options: new DotEnvOptions(envFilePaths: [Path.Combine(AppContext.BaseDirectory, ".env")]));
 
 var endpoint = Environment.GetEnvironmentVariable("AZURE_AI_PROJECT_ENDPOINT") ?? throw new InvalidOperationException("AZURE_AI_PROJECT_ENDPOINT is not set.");
 var deploymentName = Environment.GetEnvironmentVariable("AZURE_AI_MODEL_DEPLOYMENT_NAME") ?? "gpt-5.4";
